@@ -20,7 +20,7 @@ class ScanDelegate(DefaultDelegate):
 
 
 def storeDevice(dev):
-  currTime = datetime.now() 
+  currTime = datetime.timestamp(datetime.now()) 
   
   if r.exists(dev.addr):
     print("Editing: {}".format(dev.addr))
