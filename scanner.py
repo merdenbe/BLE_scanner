@@ -1,55 +1,59 @@
+import argparse
 import redis
-import json
 
 from apscheduler.schedulers.background import BlockingScheduler
-from bluepy.btle import Scanner, DefaultDelegate
-from datetime import datetime
+from bluepy.btle import Scanner, Peripheral
+
+from utils import ScanDelegate, updateEntry, createEntry, buildParser
 
 
-class ScanDelegate(DefaultDelegate):
-    def __init__(self):
-        DefaultDelegate.__init__(self)
-
-    def handleDiscovery(self, dev, isNewDev, isNewData):
-        if isNewDev:
-            pass
-            # print("Discovered device".format(dev.addr))
-        elif isNewData:
-            pass
-            # print("Received new data from".format(dev.addr))
+SCANNING_INTERVAL= 10
+OUTPUT_FILE = "default"
+TARGET_ADDR = None
+MIN_RSSI = None
 
 
-def storeDevice(dev):
-  currTime = datetime.timestamp(datetime.now()) 
+def setGlobals(args):
+  global TARGET_ADDR
+  global OUTPUT_FILE
   
+  if args.targetAddr is not None:
+    TARGET_ADDR = args.targetAddr
+
+  if args.outputFile is not None:
+    OUTPUT_FILE = args.outputFile
+
+
+def readDevice(dev):
+  # Only read  devices with a specific addr 
+  if TARGET_ADDR is not None and dev.getValueText(9) != TARGET_ADDR:
+    return
+
+  # Only reads devices within a range
+  if MIN_RSSI is not None and dev.rssi < MIN_RSSI:
+    return 
+
+  # Either update an existing entry or create a new one  
   if r.exists(dev.addr):
-    print("Editing: {}".format(dev.addr))
-    entry = json.loads(r.get(dev.addr).decode('utf-8'))
-    entry["last_scanned_at"] = currTime
-    entry["times_scanned"] += 1
+    updateEntry(r, dev, SCANNING_INTERVAL, OUTPUT_FILE)
   else:
-    print("Storing: {}".format(dev.addr))
-    entry = {"last_scanned_at": currTime, "times_scanned": 1}
-    
-  r.set(dev.addr, json.dumps(entry))
+    createEntry(r, dev, OUTPUT_FILE) 
 
 
-
-def scanDevices(r, scanner):
+def scan(r, scanner):
   scanner.clear()
-  devices = scanner.scan(5.0)
+  devices = scanner.scan(1.0)
   
   for dev in devices:
-    # print("Device {} ({}), RSSI={} dB".format(dev.addr, dev.addrType, dev.rssi))
-    
-    storeDevice(dev)
+    readDevice(dev)
 
-    '''
-    for (adtype, desc, value) in dev.getScanData():
-        print("  {} = {}".format(desc, value))
-    '''
 
 if __name__ == "__main__":
+  # Parse command line arguments 
+  parser = buildParser()
+  args = parser.parse_args()
+  setGlobals(args)
+
   # Initialize database instance
   r = redis.Redis()
  
@@ -58,7 +62,7 @@ if __name__ == "__main__":
   
   # Initialize scheduler 
   sched = BlockingScheduler()
-  sched.add_job(lambda: scanDevices(r, scanner), 'interval', seconds=10)
+  sched.add_job(lambda: scan(r, scanner), 'interval', seconds=SCANNING_INTERVAL)
   sched.start()
 
  
