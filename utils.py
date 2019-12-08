@@ -16,7 +16,7 @@ from datetime import datetime
 def buildParser():
   parser = argparse.ArgumentParser()
   
-  parser.add_argument("-t", "--targetAddr", type=str, default=None,
+  parser.add_argument("-t", "--targetUUID", type=str, default=None,
                       help="MAC address of target device")
   parser.add_argument("-o", "--outputFile", type=str, default="default",
                       help="file where output is logged to")

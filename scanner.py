@@ -9,16 +9,16 @@ from utils import ScanDelegate, updateEntry, createEntry, buildParser
 
 SCANNING_INTERVAL= 10
 OUTPUT_FILE = "default"
-TARGET_ADDR = None
+TARGET_UUID = None
 MIN_RSSI = None
 
 
 def setGlobals(args):
-  global TARGET_ADDR
+  global TARGET_UUID
   global OUTPUT_FILE
   
-  if args.targetAddr is not None:
-    TARGET_ADDR = args.targetAddr
+  if args.targetUUID is not None:
+    TARGET_UUID = args.targetUUID
 
   if args.outputFile is not None:
     OUTPUT_FILE = args.outputFile
@@ -26,7 +26,7 @@ def setGlobals(args):
 
 def readDevice(dev):
   # Only read  devices with a specific addr 
-  if TARGET_ADDR is not None and dev.getValueText(9) != TARGET_ADDR:
+  if TARGET_UUID is not None and dev.getValueText(3) != TARGET_UUID:
     return
 
   # Only reads devices within a range
