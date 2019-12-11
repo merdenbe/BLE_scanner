@@ -7,12 +7,13 @@ from bluepy.btle import Scanner, Peripheral
 from utils import ScanDelegate, updateEntry, createEntry, buildParser
 
 
-SCANNING_INTERVAL= 10
-OUTPUT_FILE = "default"
-TARGET_UUID = None
-MIN_RSSI = None
+SCANNING_INTERVAL= 10         # scan runs every SCANNING_INTERVAL seconds
+OUTPUT_FILE = "default"       # file where the output is logge dto 
+TARGET_UUID = None            # UUID the scanner scans for 
+MIN_RSSI = None               # minimum RSSI value (range sensor)
 
 
+# Sets global variables based on command line arguments
 def setGlobals(args):
   global TARGET_UUID
   global OUTPUT_FILE
@@ -40,6 +41,7 @@ def readDevice(dev):
     createEntry(r, dev, OUTPUT_FILE) 
 
 
+# Reads each device that is scanned 
 def scan(r, scanner):
   scanner.clear()
   devices = scanner.scan(1.0)
